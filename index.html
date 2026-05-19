@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>COSMIC RADAR — Zvenyhorodka Kanban Board</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0f19;
+            color: #c1cbdc;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Елемент панелі управління (Header) */
+        .space-header {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 1px solid #1f3a60;
+            border-left: 5px solid #38bdf8;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .space-title {
+            color: #38bdf8;
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .space-subtitle {
+            color: #9ca3af;
+            font-size: 14px;
+            margin: 0 0 15px 0;
+        }
+
+        .system-status {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 10px 15px;
+            font-family: monospace;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        /* Таблиця телеметрії підрозділів */
+        .metrics-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            color: #f3f4f6;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #1f3a60;
+            padding-bottom: 5px;
+        }
+
+        .space-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #111827;
+            border: 1px solid #1f3a60;
+        }
+
+        .space-table th {
+            background-color: #1f2937;
+            color: #38bdf8;
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #1f3a60;
+        }
+
+        .space-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #1f3a60;
+        }
+
+        .space-table tr:hover {
+            background-color: #151f32;
+        }
+
+        /* Системні бейджі кодів */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+
+        .badge-stable { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-warn { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-critical { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* Табличний Канбан для надійної кросплатформенності */
+        .kanban-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 15px 0;
+            margin-left: -15px;
+            margin-right: -15px;
+        }
+
+        .kanban-col {
+            width: 33.333%;
+            vertical-align: top;
+            background-color: #111827;
+            border: 1px solid #1f3a60;
+            border-radius: 4px;
+            padding: 15px;
+        }
+
+        .col-header {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #1f3a60;
+            letter-spacing: 1px;
+        }
+
+        .col-header.backlog { color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
+        .col-header.inflight { color: #fbbf24; border-color: rgba(245, 158, 11, 0.4); }
+        .col-header.stabilized { color: #34d399; border-color: rgba(16, 185, 129, 0.4); }
+
+        /* Космічні картки завдань */
+        .kanban-card {
+            background-color: #1f2937;
+            border: 1px solid #2d3748;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .card-id {
+            font-family: monospace;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 5px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f3f4f6;
+            margin: 0 0 8px 0;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            background-color: #111827;
+            padding: 6px 10px;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            border-left: 2px solid #38bdf8;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: #d1d5db;
+            margin-bottom: 12px;
+        }
+
+        .space-footer {
+            margin-top: 40px;
+            border-top: 1px solid #1f3a60;
+            padding-top: 15px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 11px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="space-header">
+        <div class="space-title">🌌 Project: Cosmic Radar</div>
+        <div class="space-subtitle">Моніторинг стійкості та декомпресії особового складу Звенигородського РВП</div>
+        <div class="system-status">
+            [!] CRITICAL ALERT: SYSTEM OVERLOAD DETECTED IN SRPP & PREVENTION SECTORS // RISK PROFILE: DECOMPRESSION LOOP IMMINENT
+        </div>
+    </div>
+
+    <div class="metrics-section">
+        <div class="section-title">🚀 Телеметрія Секторів (Orbital Stability)</div>
+        <table class="space-table">
+            <thead>
+                <tr>
+                    <th>🛰️ Назва сектору</th>
+                    <th>📊 Індекс стабільності</th>
+                    <th>👥 Комплектація</th>
+                    <th>🚨 Профіль ризику</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Сектор кадрів / ОСБ</strong></td>
+                    <td>7.2 / 8.0</td>
+                    <td>~90%</td>
+                    <td><span class="badge badge-stable">Stable Orbit</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Кримінальна поліція</strong></td>
+                    <td>6.0 / 8.0</td>
+                    <td>~80%</td>
+                    <td><span class="badge badge-warn">Minor Turbulence</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Відділ превенції</strong></td>
+                    <td>4.1 / 8.0</td>
+                    <td>50% - 70%</td>
+                    <td><span class="badge badge-warn">High Gravitational Pull</span></td>
+                </tr>
+                <tr>
+                    <td><strong>СРПП (Сектор РПП)</strong></td>
+                    <td>2.2 / 5.0*</td>
+                    <td>&lt;50%</td>
+                    <td><span class="badge badge-critical">Event Horizon</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-title">📋 Канбан-Дошка Управління Кризами</div>
+    <table class="kanban-table">
+        <tr>
+            <td class="kanban-col">
+                <div class="col-header backlog">🛑 Black Holes (Збої)</div>
+                
+                <div class="kanban-card">
+                    <div class="card-id">[#01] Chronos Overload</div>
+                    <div class="card-title">Перевантаження змін</div>
+                    <div class="card-meta">СРПП та Превенція</div>
+                    <div class="card-desc">Робота по 22–30 годин. 62% респондентів працюють понаднормово через дефіцит кадрів.</div>
+                    <span class="badge badge-critical">Critical</span>
+                </div>
+
+                <div class="kanban-card">
+                    <div class="card-id">[#02] Fuel & Hull Depletion</div>
+                    <div class="card-title">Виснаження МТЗ</div>
+                    <div class="card-meta">Логістика</div>
+                    <div class="card-desc">Лише 42% задоволені МТЗ. Несправні авто, жорсткий брак пального та розхідників.</div>
+                    <span class="badge badge-critical">Critical</span>
+                </div>
+
+                <div class="kanban-card">
+                    <div class="card-id">[#04] Metric Inversion</div>
+                    <div class="card-title">"Палична" система премій</div>
+                    <div class="card-meta">Мотивація</div>
+                    <div class="card-desc">38% незадоволені. Премії сприймаються як інструмент покарання за невиконання планів.</div>
+                    <span class="badge badge-warn">High Risk</span>
+                </div>
+            </td>
+
+            <td class="kanban-col">
+                <div class="col-header inflight">🔄 Warp Drive (Впровадження)</div>
+                
+                <div class="kanban-card">
+                    <div class="card-id">[#A-01] Fleet Audit</div>
+                    <div class="card-title">Аудит & Перерозподіл мас</div>
+                    <div class="card-meta">Штатний розклад</div>
+                    <div class="card-desc">Терміновий аудит навантаження СРПП та превенції. Вирівнювання критичних точок дефіциту.</div>
+                    <span class="badge badge-warn">Active Thrust</span>
+                </div>
+
+                <div class="kanban-card">
+                    <div class="card-id">[#A-02] Logistics Supply</div>
+                    <div class="card-title">Екстрений паливний дроп</div>
+                    <div class="card-meta">Забезпечення</div>
+                    <div class="card-desc">Виділення базових витратних матеріалів та пального для негайного ефекту на моральний клімат.</div>
+                    <span class="badge badge-warn">Active Thrust</span>
+                </div>
+
+                <div class="kanban-card">
+                    <div class="card-id">[#A-03] Command Protocol</div>
+                    <div class="card-title">Службова перевірка стилю</div>
+                    <div class="card-meta">СРПП Керівництво</div>
+                    <div class="card-desc">Реагування на низьку довіру (2.2). Вивчення фактів тиску та токсичної атмосфери у секторі.</div>
+                    <span class="badge badge-warn">In Testing</span>
+                </div>
+            </td>
+
+            <td class="kanban-col">
+                <div class="col-header stabilized">🟢 Stabilized (Контроль)</div>
+                
+                <div class="kanban-card">
+                    <div class="card-id">[#S-01] Safe Haven Nodes</div>
+                    <div class="card-title">Стабільність Кадрів & ОСБ</div>
+                    <div class="card-meta">Моніторинг</div>
+                    <div class="card-desc">Утримання позитивного вектору та оптимального морального стану в стабільних секторах.</div>
+                    <span class="badge badge-stable">Nominal</span>
+                </div>
+
+                <div class="kanban-card">
+                    <div class="card-id">[#S-02] Verification Loop</div>
+                    <div class="card-title">Новий формат аудитів УГІ</div>
+                    <div class="card-meta">УГІ ГУНП</div>
+                    <div class="card-desc">Замість пасивних чек-лістів — жива перевірка навантаження та контроль виконання попередніх рішень.</div>
+                    <span class="badge badge-stable">Nominal</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="space-footer">
+        [SYSTEM LOG END] &bull; Generated by SAR UGI Cherkasy Oblast &bull; Technology for Security & Precision
+    </div>
+</div>
+
+</body>
+</html>
