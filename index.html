@@ -2,21 +2,22 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON | STRATEGIC SCI-FI DASHBOARD</title>
+    <title>GIDEON | TACTICAL COMMAND DASHBOARD</title>
     <style>
         :root {
-            --bg-space: #010409;
+            --bg-space: #02040a;
             --hud-cyan: #00f2ff;
             --hud-amber: #ffb703;
-            --hud-red: #ff0055;
+            --hud-red: #ff2a5f;
             --hud-green: #00ff88;
-            --panel-glass: rgba(6, 12, 26, 0.82);
+            --panel-glass: rgba(6, 12, 28, 0.85);
+            --border-glow: rgba(0, 242, 255, 0.15);
         }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background-color: var(--bg-space);
-            font-family: 'Consolas', 'Courier New', monospace; color: #fff;
+            font-family: 'Consolas', 'Courier New', monospace; color: #f1f5f9;
             user-select: none;
         }
 
@@ -24,7 +25,7 @@
             position: absolute; top: 0; left: 0; z-index: 1;
         }
 
-        /* HUD Оверлей */
+        /* HUD GRID LAYOUT */
         .hud-grid {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10; pointer-events: none; box-sizing: border-box; padding: 30px;
@@ -35,73 +36,86 @@
             border: 1px solid rgba(0, 242, 255, 0.2);
             border-radius: 6px; pointer-events: auto;
             backdrop-filter: blur(20px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,242,255,0.05);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.95), inset 0 0 20px rgba(0,242,255,0.03);
             position: absolute;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
         }
 
-        /* Позиціонування елементів кабіни шатла */
+        /* Компоненти інтерфейсу шатла */
         .top-command {
-            top: 30px; left: 30px; right: 30px; height: 75px;
-            border-top: 3px solid var(--hud-cyan);
-            padding: 15px 25px; box-sizing: border-box;
+            top: 30px; left: 30px; right: 30px; height: 80px;
+            border-top: 3px solid var(--hud-cyan); padding: 18px 25px;
         }
 
         .left-radar {
-            top: 135px; left: 30px; width: 380px; bottom: 140px;
-            border-left: 3px solid var(--hud-cyan); padding: 20px;
+            top: 140px; left: 30px; width: 420px; bottom: 330px;
+            border-left: 3px solid var(--hud-cyan); padding: 22px;
+            overflow-y: auto;
         }
 
         .right-trajectory {
-            top: 135px; right: 30px; width: 380px; bottom: 140px;
-            border-right: 3px solid var(--hud-cyan); padding: 20px;
+            top: 140px; right: 30px; width: 420px; bottom: 330px;
+            border-right: 3px solid var(--hud-cyan); padding: 22px;
         }
 
         .bottom-decryption {
-            bottom: 30px; left: 30px; right: 30px; height: 85px;
-            border-bottom: 3px solid var(--hud-cyan);
-            padding: 15px 25px; box-sizing: border-box;
-            background: rgba(4, 8, 18, 0.95);
+            bottom: 30px; left: 30px; right: 30px; height: 270px;
+            border-bottom: 3px solid var(--hud-cyan); padding: 20px 25px;
+            background: rgba(3, 6, 15, 0.98);
+            border-top: 1px solid rgba(0, 242, 255, 0.1);
         }
 
-        /* Текстова архітектура */
         h1 { margin: 0; font-size: 20px; letter-spacing: 5px; font-weight: 900; color: #fff; text-transform: uppercase; }
-        .ticker { font-size: 11px; color: var(--hud-cyan); letter-spacing: 2px; margin-top: 4px; }
+        .ticker { font-size: 11px; color: var(--hud-cyan); letter-spacing: 2px; margin-top: 5px; opacity: 0.8; }
         
-        .panel-title { font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: var(--hud-cyan); margin-bottom: 15px; border-bottom: 1px solid rgba(0,242,255,0.1); padding-bottom: 5px; }
+        .panel-title { font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: var(--hud-cyan); margin-bottom: 15px; border-bottom: 1px solid rgba(0,242,255,0.1); padding-bottom: 6px; }
 
-        /* Список секторів для інтерактиву */
+        /* Елементи вибору нод */
         .sector-node {
-            padding: 10px 12px; margin-bottom: 8px; border-radius: 4px;
-            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer; transition: all 0.3s; font-size: 12px;
+            padding: 12px 15px; margin-bottom: 10px; border-radius: 4px;
+            background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); font-size: 11.5px;
         }
         .sector-node:hover {
             background: rgba(0, 242, 255, 0.08); border-color: var(--hud-cyan);
-            transform: translateX(5px);
+            transform: translateX(6px);
         }
         .sector-node.active {
-            background: rgba(0, 242, 255, 0.15); border-color: var(--hud-cyan);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            background: rgba(0, 242, 255, 0.13); border-color: var(--hud-cyan);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
         }
 
         .status-badge {
-            float: right; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 2px;
+            float: right; font-size: 9.5px; font-weight: bold; padding: 2px 7px; border-radius: 2px; text-transform: uppercase;
         }
-        .badge-crit { background: rgba(255,0,85,0.2); color: var(--hud-red); border: 1px solid var(--hud-red); }
-        .badge-warn { background: rgba(255,183,3,0.2); color: var(--hud-amber); border: 1px solid var(--hud-amber); }
-        .badge-nom { background: rgba(0,255,136,0.2); color: var(--hud-green); border: 1px solid var(--hud-green); }
+        .badge-crit { background: rgba(255,0,85,0.15); color: var(--hud-red); border: 1px solid var(--hud-red); }
+        .badge-warn { background: rgba(255,183,3,0.15); color: var(--hud-amber); border: 1px solid var(--hud-amber); }
+        .badge-nom { background: rgba(0,255,136,0.15); color: var(--hud-green); border: 1px solid var(--hud-green); }
 
-        /* Лог чорної скриньки */
-        .glitch-text { animation: textGlitch 0.2s linear infinite hidden; }
-        @keyframes textGlitch {
-            0% { transform: translate(0) } 20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) } 60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) } 100% { transform: translate(0) }
+        /* Таблиця розгортки всередині лога */
+        .decryption-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;
         }
+        .decryption-col {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            padding: 15px; border-radius: 4px; font-size: 12.5px; line-height: 1.6;
+        }
+        .decryption-col b { display: block; font-size: 10px; letter-spacing: 1.5px; color: var(--hud-cyan); margin-bottom: 8px; text-transform: uppercase; }
 
-        .log-row { font-size: 13px; line-height: 1.5; color: #e2e8f0; display: none; }
-        .log-row.active { display: block; }
+        .crit-box { border-left: 3px solid var(--hud-red); background: rgba(255,0,85,0.03); }
+        .warn-box { border-left: 3px solid var(--hud-amber); background: rgba(255,183,3,0.02); }
+        .nom-box { border-left: 3px solid var(--hud-green); background: rgba(0,255,136,0.02); }
+
+        /* Анімація перешкод Глічу */
+        .glitch-active { animation: hudGlitch 0.25s linear infinite; }
+        @keyframes hudGlitch {
+            0% { opacity: 0.9; transform: translate(0); }
+            20% { transform: translate(-2px, 1px); }
+            40% { opacity: 0.8; transform: translate(2px, -1px); }
+            60% { transform: translate(-1px, -2px); }
+            80% { opacity: 1; transform: translate(2px, 2px); }
+            100% { transform: translate(0); }
+        }
     </style>
 </head>
 <body>
@@ -109,41 +123,37 @@
 <canvas id="cockpit-glass"></canvas>
 
 <div class="hud-grid">
-    <!-- Верхня панель капітана -->
+    <!-- Вертикальна командна панель шатла -->
     <div class="hud-panel top-command">
         <div style="float: right; text-align: right;">
-            <div id="hud-timer" style="font-size: 16px; font-weight: bold; color: #fff;">SYS_TIME: 17:58:31</div>
-            <div style="font-size: 10px; color: var(--hud-red); letter-spacing: 1px; margin-top: 3px;">WARP_DRIVE_SHORTAGE: 50%</div>
+            <div style="font-size: 15px; font-weight: bold; color: #fff; letter-spacing: 1px;">MISSION_LOG: 14-15.05.2026</div>
+            <div style="font-size: 10px; color: var(--hud-red); letter-spacing: 2px; margin-top: 4px; font-weight: bold;">STAFF_SHORTAGE: 30%-50% DETECTED</div>
         </div>
         <h1>GIDEON // COCKPIT TACTICAL VIEW</h1>
-        <div class="ticker">ORBITAL INTERFACE v3.8 // TELEMETRY LINK: ZVENYHORODKA DISTRICT</div>
+        <div class="ticker">АНАЛІТИЧНИЙ МОНІТОР УГІ // ЗВЕНИГОРОДСЬКИЙ РВП // 47 РЕЦЕПТОРІВ ТЕЛЕМЕТРІЇ</div>
     </div>
 
-    <!-- Ліва панель: Радіолокаційний секторний вибір -->
+    <!-- Ліва панель: Інтерактивний вибір секторів загрози -->
     <div class="hud-panel left-radar">
-        <div class="panel-title">🛰️ Моніторинг секторів загрози</div>
-        <div id="sector-list">
-            <!-- Генерується скриптом -->
-        </div>
+        <div class="panel-title">🛰️ Моніторинг та селекція підрозділів</div>
+        <div id="nodes-container"></div>
     </div>
 
-    <!-- Права панель: Траєкторія входу в атмосферу / Астероїди -->
+    <!-- Права панель: Траєкторія польоту та вхід у хмару астероїдів -->
     <div class="hud-panel right-trajectory">
-        <div class="panel-title">🎯 Траєкторія декомпресії нод</div>
-        <div id="trajectory-meta" style="font-size: 11px; color: var(--text-gray); line-height: 1.4; margin-bottom: 15px;">
-            Аналіз вектора руху підрозділу. Об'єкти у нижній зоні увійшли у критичне астероїдне поле (ризик ліквідації стійкості).
-        </div>
-        <canvas id="trajectory-canvas" width="340" height="280" style="border: 1px solid rgba(0,242,255,0.05); background: rgba(0,0,0,0.3);"></canvas>
+        <div class="panel-title">🎯 Вектор декомпресії та балістика</div>
+        <canvas id="trajectory-canvas" width="370" height="230" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0,242,255,0.08);"></canvas>
     </div>
 
-    <!-- Нижня панель: Дешифрування чорної скриньки опитування -->
-    <div class="hud-panel bottom-decryption" id="black-box">
-        <div style="font-size: 10px; color: var(--hud-red); font-weight: bold; margin-bottom: 5px; letter-spacing: 2px;">
-            [DECRYPTION LOG] // РЕАЛЬНІ ПОКАЗАННЯ ОСОБОВОГО СКЛАДУ:
+    <!-- Нижня розширена панель: Повна кастомізована розгортка поп-апу УГІ -->
+    <div class="hud-panel bottom-decryption" id="decryption-panel">
+        <div style="font-size: 11px; color: var(--hud-cyan); font-weight: 900; letter-spacing: 2px;" id="decryption-status">
+            [DECRYPTION LOG] // ОЧІКУВАННЯ ВИБОРУ СЕКТОРУ...
         </div>
-        <div id="log-container">
-            <div class="log-row active" style="color: var(--hud-cyan); font-style: italic;">
-                НАВЕДІТЬ КУРСОР АБО КЛІКНІТЬ НА СЕКТОР ЛІВОРУЧ ДЛЯ ЗАХОПЛЕННЯ ТЕЛЕМЕТРІЇ ПОЛІЦЕЙСЬКОГО ШАТЛА.
+        <div class="decryption-grid" id="decryption-content">
+            <!-- Динамічний вивід аналізу -->
+            <div style="grid-column: span 3; text-align: center; color: rgba(255,255,255,0.3); padding-top: 50px; font-style: italic;">
+                Натисніть на будь-яку тактичну ноду ліворуч для завантаження логів чорної скриньки опитування особового складу.
             </div>
         </div>
     </div>
@@ -154,148 +164,198 @@
     const ctx = canvas.getContext('2d');
     
     let stars = [];
-    let activeSectorIdx = 0;
-    let glitchActive = false;
+    let currentActiveIdx = -1;
+    let warpSpeed = 1.5;
 
-    // Системні аналітичні дані, інтегровані в бортовий комп'ютер шатла
-    const flightData = [
-        { name: "Сектор патрульної поліції (СРПП)", code: "SRPP", load: 0.92, status: "CRITICAL", badge: "badge-crit", log: "Чорна скринька СРПП: Фактичні зміни тривають по 22–30 годин (доба через добу). Постійне цькування з боку керівництва (індекс довіри 2.2)[cite: 1, 2]. 100% нод планують термінову евакуацію із системи (звільнення)[cite: 1]. Паливний колапс[cite: 1, 2]." },
-        { name: "Відділ превенції", code: "PREV", load: 0.78, status: "WARNING", badge: "badge-warn", log: "Чорна скринька Превенції: Робочі сесії по 12–24 години[cite: 1]. 38% зафіксували відкритий протест проти 'паличної системи' зняття премій[cite: 1]. Спільна робота з ТЦК критично нищить довіру населення[cite: 1]." },
-        { name: "Слідство та Дізнання", code: "INVEST", load: 0.65, status: "WARNING", badge: "badge-warn", log: "Чорна скринька Дізнання: Хронічний дефіцит кадрів на землі (30-50% некомплекту)[cite: 1]. Атмосфера напружена, фіксується внутрішня деструкція комунікації між службами[cite: 1, 2]." },
-        { name: "Кримінальної поліція", code: "CRIM", load: 0.45, status: "STABLE", badge: "badge-nom", log: "Чорна скринька КР: Середнє навантаження 11–13 годин на добу[cite: 2]. Проте фіксується стабільне ядро авторитетів (Мамалат, Левицький), що тримає бойовий порядок служби[cite: 1]." },
-        { name: "Кадри / Моніторинг / ССОБ", code: "STAFF", load: 0.15, status: "NOMINAL", badge: "badge-nom", log: "Чорна скринька HQ: Абсолютна стабільність системи (7-8 балів)[cite: 1, 2]. Нормований графік роботи, відносини з керівництвом доброзичливі та взаємоповажні[cite: 1, 2]." }
+    // Справжній повний аналіз масиву даних за результатами вашої таблиці
+    const realSurveyAnalysis = [
+        {
+            code: "SRPP",
+            name: "Сектор реагування патрульної поліції",
+            status: "CRITICAL",
+            badge: "badge-crit",
+            load: 0.95, // Критичне падіння в астероїди
+            problem: "Повний робочий день вказано як '24/24', '28 годин' та '30 годин'. Зміни проходять доба через добу + допрацювання. Постійне цькування керівництвом, палична система (зняття премії за невиконання плану), повна відсутність співпраці з ТЦК та палива.",
+            results: "Рівень атмосфери в колективі — 1 бал із 8[cite: 1, 2]. Повна відсутність задоволеності графіком та керівником (оцінка 1)[cite: 1, 2]. Авторитети відсутні (вказано 'немає')[cite: 1, 2]. 100% особового складу вказали 'планую звільнення зі служби в поліції'[cite: 1, 2].",
+            impact: "Повний розвал патрульного сектору підрозділу[cite: 1]. Каскадне звільнення залишків особового складу через фізичне виснаження та високий ризик виникнення резонансних НП і ДТП на маршрутах[cite: 1]."
+        },
+        {
+            code: "PREVENT",
+            name: "Відділ превентивної діяльності",
+            status: "CRITICAL",
+            badge: "badge-crit",
+            load: 0.82,
+            problem: "Фактичний робочий день триває від 12 до 15 годин[cite: 1, 2]. Постійна понаднормова робота, гострий дефіцит ПММ, несправний автотранспорт та системне залучення до мобілізаційних заходів[cite: 1, 2]. Скарги на стиль управління заступника начальника РВП Захарченка[cite: 1, 2].",
+            results: "Оцінка атмосфери впала до 3 балів із 8[cite: 1, 2]. Задоволеність графіком, МТЗ та грошовим забезпеченням — 'зовсім незадовільна'[cite: 1, 2]. Основними демотиваторами є надмірне навантаження та конфлікти[cite: 1, 2]. Респонденти шукають можливості змінити підрозділ або звільнитися[cite: 1, 2].",
+            impact: "Втрата контролю над профілактикою на території обслуговування[cite: 1]. Знищення довіри населення до поліцейських офіцерів громад через виконання невластивих функцій та залучення до ТЦК[cite: 1]."
+        },
+        {
+            code: "INVEST",
+            name: "Слідчий відділ та Сектор дізнання",
+            status: "WARNING",
+            badge: "badge-warn",
+            load: 0.68,
+            problem: "Робочий день триває 9–12 годин, постійна понаднормова робота через некомплект нод[cite: 1, 2]. Фіксується несправедливість у преміюванні з боку начальника РВП та суворий контроль лише за показниками[cite: 1, 2]. Відносини з безпосереднім керівництвом — конфліктні[cite: 1, 2].",
+            results: "Загальна атмосфера в колективі оцінюється посередньо (5–6 балів)[cite: 1, 2]. Задоволеність МТЗ та графіком низька[cite: 1, 2]. Фігурують запити на збільшення штату[cite: 1]. Частина респондентів зі стажем понад 10 років вказала 'планую звільнення'[cite: 1, 2].",
+            impact: "Гальмування темпів досудового розслідування, ризики процесуальних порушень строків тримання та падіння якості збору доказової бази в судах[cite: 1, 2]."
+        },
+        {
+            code: "CRIMINAL",
+            name: "Сектор кримінальної поліції",
+            status: "STABLE",
+            badge: "badge-nom",
+            load: 0.42,
+            problem: "Робочий день триває 10–12 годин, робота у вихідні дні та понаднормово є частою (кілька разів на тиждень)[cite: 1, 2]. Проте фіксується висока задоволеність характером служби та знанням функціоналу[cite: 1, 2].",
+            results: "Атмосфера оцінюється високо — від 6 до 8 балів[cite: 1, 2]. Чітко визначені внутрішні лідери та авторитети колективу (прямо названі прізвища **Мамалат, Левицький, Сторчак**)[cite: 1, 2]. 100% опитаних оперативників бажають продовжувати службу в підрозділі[cite: 1, 2].",
+            impact: "Стабільне ядро розшукового блоку підрозділу. Потребує лише точкового покращення МТЗ, виділення лімітів пального та підвищення заробітної плати для профілактики вигорання[cite: 1]."
+        },
+        {
+            code: "STAFF_HQ",
+            name: "Кадри, Моніторинг та ССОБ",
+            status: "NOMINAL",
+            badge: "badge-nom",
+            load: 0.18,
+            problem: "Повний робочий день (8–9 годин)[cite: 1, 2]. Понаднормова робота виникає рідко (іноді 1–2 рази на місяць)[cite: 1, 2]. Конфлікти, привілеї чи об'єктивні тригери деструкції повністю відсутні[cite: 1, 2].",
+            results: "Максимальний рівень внутрішньої стабільності. Оцінка атмосфери в колективі — 7–8 балів (ідеальна)[cite: 1, 2]. Повна задоволеність відносинами з керівництвом, характером служби та колективом[cite: 1, 2]. Авторитет — Загурський, Кирнос[cite: 1, 2].",
+            impact: "Зона повного системного благополуччя. Ризики відсутні. Дані підрозділи є надійною точкою опори для проведення внутрішніх реформ[cite: 1, 2]."
+        }
     ];
 
     function initSpace() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        stars = Array.from({length: 150}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            z: Math.random() * canvas.width
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        stars = Array.from({length: 160}, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height, z: Math.random() * canvas.width
         }));
     }
     window.addEventListener('resize', initSpace);
     initSpace();
 
-    // Рендеринг 3D-космосу (Ефект кабіни корабля, що летить вперед)
-    function drawSpaceflight() {
-        ctx.fillStyle = '#02040a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Кінематографічний політ крізь термосферу
+    function drawWarpSpeed() {
+        ctx.fillStyle = '#010308'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Малювання тактичної сітки лобового скла шатла
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.03)';
+        // Тонка перспективна сітка лобового скла шатла
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.02)';
         ctx.lineWidth = 1;
-        for (let i = 0; i < canvas.width; i += 60) {
+        for (let i = 0; i < canvas.width; i += 70) {
             ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(canvas.width / 2, canvas.height / 2); ctx.stroke();
         }
 
-        // Рендеринг зірок з наближенням
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         stars.forEach(s => {
-            s.z -= 2; 
+            s.z -= warpSpeed;
             if (s.z <= 0) s.z = canvas.width;
             
-            const k = 400 / s.z;
+            const k = 350 / s.z;
             const px = (s.x - canvas.width / 2) * k + canvas.width / 2;
             const py = (s.y - canvas.height / 2) * k + canvas.height / 2;
-            const size = (1 - s.z / canvas.width) * 3;
+            const size = (1 - s.z / canvas.width) * 2.5;
 
             if (px >= 0 && px <= canvas.width && py >= 0 && py <= canvas.height) {
-                ctx.beginPath();
-                ctx.arc(px, py, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(px, py, size, 0, Math.PI * 2); ctx.fill();
             }
         });
 
-        // Малювання прицілу фіксації по центру скла
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.15)';
-        ctx.strokeRect(canvas.width/2 - 30, canvas.height/2 - 30, 60, 60);
-
-        requestAnimationFrame(drawSpaceflight);
+        requestAnimationFrame(drawWarpSpeed);
     }
-    drawSpaceflight();
+    drawWarpSpeed();
 
-    // Генерація лівої інтерактивної панелі
-    const listContainer = document.getElementById('sector-list');
-    flightData.forEach((sec, idx) => {
-        listContainer.innerHTML += `
-            <div class="sector-node ${idx === 0 ? 'active' : ''}" onclick="selectSector(${idx})">
+    // Генерація лівого списку підрозділів
+    const nodesBox = document.getElementById('nodes-container');
+    realSurveyAnalysis.forEach((sec, idx) => {
+        nodesBox.innerHTML += `
+            <div class="sector-node" id="node-${idx}" onclick="triggerTacticalDecryption(${idx})">
                 <span class="status-badge ${sec.badge}">${sec.status}</span>
-                <b>[${sec.code}]</b> ${sec.name.slice(0, 22)}...
+                <b>[${sec.code}]</b> ${sec.name.slice(0, 24)}...
             </div>
         `;
     });
 
-    // Обробка кліку з ефектом цифрового шуму (Glitch)
-    function selectSector(idx) {
-        activeSectorIdx = idx;
+    // ІНТЕРАКТИВНИЙ КЛІК: ГЛІЧ ТА ОНОВЛЕННЯ ДАНИХ ПОП-АПУ
+    function triggerTacticalDecryption(idx) {
+        currentActiveIdx = idx;
+        warpSpeed = 6.0; // Ефект прискорення корабля при обробці даних
         
-        // Візуальний ефект шуму на нижній панелі дешифрування
-        const logBox = document.getElementById('black-box');
-        logBox.style.background = 'rgba(255, 0, 85, 0.2)';
-        logBox.classList.add('glitch-text');
-
-        // Оновлення активного класу списку
-        const nodes = document.querySelectorAll('.sector-node');
-        nodes.forEach((n, nIdx) => n.classList.toggle('active', nIdx === idx));
+        const panel = document.getElementById('decryption-panel');
+        panel.classList.add('glitch-active');
+        
+        // Оновлення активного класу вибору ноди
+        document.querySelectorAll('.sector-node').forEach((n, nIdx) => n.classList.toggle('active', nIdx === idx));
 
         setTimeout(() => {
-            logBox.style.background = 'var(--panel-glass)';
-            logBox.classList.remove('glitch-text');
-            document.getElementById('log-container').innerHTML = `
-                <div class="log-row active" style="color: ${flightData[idx].status === 'CRITICAL' ? 'var(--hud-red)' : 'var(--hud-cyan)'}">
-                    ${flightData[idx].log}
+            panel.classList.remove('glitch-active');
+            warpSpeed = 1.5; // Повернення до нормального польоту
+
+            const target = realSurveyAnalysis[idx];
+            let boxClass = "nom-box";
+            if (target.status === "CRITICAL") boxClass = "crit-box";
+            else if (target.status === "WARNING") boxClass = "warn-box";
+
+            document.getElementById('decryption-status').innerText = `[DECRYPTION COMPLETE] // UNIT: ${target.name.toUpperCase()} // STATUS: ${target.status}`;
+            
+            document.getElementById('decryption-content').innerHTML = `
+                <div class="decryption-col ${boxClass}">
+                    <b>1. Суть виявленої проблеми:</b>
+                    ${target.problem}
+                </div>
+                <div class="decryption-col ${boxClass}">
+                    <b>2. Результати анкетування (Телеметрія):</b>
+                    ${target.results}
+                </div>
+                <div class="decryption-col ${boxClass}">
+                    <b>3. Критичні наслідки для РВП:</b>
+                    ${target.impact}
                 </div>
             `;
-        }, 250);
+        }, 300);
     }
 
-    // Рендеринг правої Canvas-діаграми траєкторії польоту ракети
-    const trajCanvas = document.getElementById('trajectory-canvas');
-    const tCtx = trajCanvas.getContext('2d');
+    // РЕНДЕРИНГ ПРАВОГО CANVAS-РАДАРА ТРАЄКТОРІЙ
+    const tCanvas = document.getElementById('trajectory-canvas');
+    const tCtx = tCanvas.getContext('2d');
 
-    function drawTrajectoryChart() {
-        tCtx.clearRect(0, 0, trajCanvas.width, trajCanvas.height);
+    function drawTacticalTrajectory() {
+        tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
 
-        // Малювання фонової зони небезпечних астероїдів (Червона зона знизу)
-        const gradient = tCtx.createLinearGradient(0, trajCanvas.height, 0, 0);
-        gradient.addColorStop(0, 'rgba(255, 0, 85, 0.15)');
-        gradient.addColorStop(0.5, 'rgba(255, 183, 3, 0.05)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        tCtx.fillStyle = gradient;
-        tCtx.fillRect(0, 0, trajCanvas.width, trajCanvas.height);
+        // Градієнтне поле астероїдної небезпеки знизу
+        const grad = tCtx.createLinearGradient(0, tCanvas.height, 0, 0);
+        grad.addColorStop(0, 'rgba(255, 0, 85, 0.2)');
+        grad.addColorStop(0.6, 'rgba(255, 183, 3, 0.05)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        tCtx.fillStyle = grad;
+        tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
 
-        // Лінія небезпечного горизонту
-        tCtx.strokeStyle = 'rgba(255, 0, 85, 0.3)';
+        // Лінія горизонту подій руйнації
+        tCtx.strokeStyle = 'rgba(255, 0, 85, 0.4)';
         tCtx.lineWidth = 1;
-        tCtx.setLineDash([4, 4]);
-        tCtx.beginPath(); tCtx.moveTo(0, trajCanvas.height * 0.6); tCtx.lineTo(trajCanvas.width, trajCanvas.height * 0.6); tCtx.stroke();
+        tCtx.setLineDash([5, 5]);
+        tCtx.beginPath(); tCtx.moveTo(0, tCanvas.height * 0.65); tCtx.lineTo(tCanvas.width, tCanvas.height * 0.65); tCtx.stroke();
         tCtx.setLineDash([]);
-        tCtx.fillStyle = 'rgba(255, 0, 85, 0.5)';
-        tCtx.font = '8px monospace';
-        tCtx.fillText("ASTEROID IMPACT HORIZON (CRITICAL SYSTEM OVERLOAD)", 10, trajCanvas.height * 0.58);
+        
+        tCtx.fillStyle = 'rgba(255, 0, 85, 0.6)';
+        tCtx.font = '9px monospace';
+        tCtx.fillText("💥 CRITICAL ASTEROID FIELD (RISK OF EXODUS)", 12, tCanvas.height * 0.61);
 
-        // Малювання ліній траєкторій для кожної ноди
-        flightData.forEach((sec, idx) => {
-            const isCurrent = idx === activeSectorIdx;
+        // Розрахунок кривих польоту ракет-підрозділів
+        realSurveyAnalysis.forEach((sec, idx) => {
+            const isSelected = idx === currentActiveIdx;
             
-            // Позиціонування вектора: чим вище load (криза), тим глибше падає ракета в астероїди[cite: 1, 2]
-            const startX = 40;
-            const endX = trajCanvas.width - 60;
-            const startY = trajCanvas.height * 0.2;
-            const endY = startY + (sec.load * (trajCanvas.height * 0.7));
+            const startX = 35;
+            const endX = tCanvas.width - 55;
+            const startY = tCanvas.height * 0.15;
+            // Ракета падає тим глибше, чим вищий коефіцієнт load (криза)[cite: 1, 2]
+            const endY = startY + (sec.load * (tCanvas.height * 0.75));
 
-            // Побудова плавної траєкторії польоту (крива Безьє)
-            tCtx.strokeStyle = isCurrent ? '#fff' : (sec.status === 'CRITICAL' ? 'var(--hud-red)' : 'rgba(0,242,255,0.2)');
-            tCtx.lineWidth = isCurrent ? 3 : 1.5;
-            
+            tCtx.strokeStyle = isSelected ? '#fff' : (sec.status === 'CRITICAL' ? 'var(--hud-red)' : 'rgba(0,242,255,0.18)');
+            tCtx.lineWidth = isSelected ? 3.5 : 1.5;
+
+            // Малювання дуги Безьє
             tCtx.beginPath();
             tCtx.moveTo(startX, startY);
-            tCtx.bezierCurveTo(startX + 100, startY, endX - 100, endY, endX, endY);
+            tCtx.bezierCurveTo(startX + 90, startY, endX - 90, endY, endX, endY);
             tCtx.stroke();
 
-            // Малювання ракети / маркера на кінці траєкторії
+            // Вибір неонового маркера ракети
             let markerColor = 'var(--hud-cyan)';
             if (sec.status === 'CRITICAL') markerColor = 'var(--hud-red)';
             else if (sec.status === 'WARNING') markerColor = 'var(--hud-amber)';
@@ -303,23 +363,30 @@
 
             tCtx.fillStyle = markerColor;
             tCtx.beginPath();
-            tCtx.arc(endX, endY, isCurrent ? 6 : 4, 0, Math.PI * 2);
+            tCtx.arc(endX, endY, isSelected ? 6.5 : 4, 0, Math.PI * 2);
             tCtx.fill();
 
-            if (isCurrent) {
+            // Ефектний приціл захоплення на активній ноді
+            if (isSelected) {
                 tCtx.strokeStyle = '#fff';
-                tCtx.beginPath(); tCtx.arc(endX, endY, 12, 0, Math.PI * 2); tCtx.stroke();
+                tCtx.lineWidth = 1;
+                tCtx.beginPath(); tCtx.arc(endX, endY, 13, 0, Math.PI * 2); tCtx.stroke();
                 
-                // Виведення миттєвого показника перевантаження
                 tCtx.fillStyle = '#fff';
                 tCtx.font = 'bold 9px monospace';
-                tCtx.fillText(`[${sec.code}] VCTR: ${(sec.load*100).toFixed(0)}%`, endX - 80, endY - 10);
+                tCtx.fillText(`[${sec.code}] DECAY: ${(sec.load * 100).toFixed(0)}%`, endX - 85, endY - 12);
             }
         });
 
-        setTimeout(drawTrajectoryChart, 100);
+        setTimeout(drawTacticalTrajectory, 80);
     }
-    drawTrajectoryChart();
+    drawTacticalTrajectory();
+
+    // Оновлення таймера шатла у реальному часі
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('hud-timer').innerText = `SYS_TIME: ${now.toTimeString().split(' ')[0]}`;
+    }, 1000);
 </script>
 </body>
 </html>
