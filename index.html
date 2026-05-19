@@ -2,257 +2,337 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON | DEEP SPACE RADAR</title>
+    <title>GIDEON | CASCADE OVERLOAD STACK</title>
     <style>
         :root {
-            --bg: #020408;
-            --radar-line: rgba(0, 242, 255, 0.2);
-            --radar-glow: rgba(0, 242, 255, 0.03);
-            --accent: #00f2ff;
-            --critical: #ff3c3c;
-            --warning: #ffb703;
-            --stable: #34d399;
+            --bg-deep: #02050a;
+            --panel-bg: rgba(6, 11, 25, 0.85);
+            --accent-cyan: #00f2ff;
+            --accent-gold: #ffb703;
+            --critical-red: #ff2a5f;
+            --stable-green: #10b981;
+            --border-line: rgba(0, 242, 255, 0.15);
         }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: var(--bg);
-            font-family: 'Courier New', Courier, monospace; color: #fff;
+            overflow: hidden; background-color: var(--bg-deep);
+            font-family: 'Consolas', 'Courier New', monospace; color: #fff;
         }
 
-        #radar-canvas {
+        #canvas-layer {
             position: absolute; top: 0; left: 0; z-index: 1;
         }
 
-        /* HUD Інтерфейс військово-космічного зразка */
-        .hud-overlay {
-            position: absolute; padding: 30px; z-index: 10; pointer-events: none;
-            width: calc(100% - 60px); height: calc(100% - 60px);
+        /* HUD Елементи управління військово-корабельного типу */
+        .hud-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            box-sizing: border-box; padding: 35px;
         }
 
         .hud-panel {
-            position: absolute; background: rgba(3, 7, 18, 0.85);
-            border: 1px solid rgba(0, 242, 255, 0.3); padding: 20px;
-            border-radius: 4px; backdrop-filter: blur(10px); pointer-events: auto;
-            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 242, 255, 0.25);
+            padding: 20px; border-radius: 4px; pointer-events: auto;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(0,242,255,0.05);
+            backdrop-filter: blur(12px);
         }
 
-        .top-left { top: 30px; left: 30px; border-left: 4px solid var(--accent); }
-        .bottom-right { bottom: 30px; right: 30px; width: 380px; border-right: 4px solid var(--accent); display: none; }
-
-        h1 { margin: 0 0 5px 0; font-size: 20px; letter-spacing: 3px; color: #fff; text-transform: uppercase; }
-        .status-tag { font-size: 11px; color: var(--accent); letter-spacing: 1px; }
-
-        /* Опис аномалії у HUD */
-        .anomaly-title { color: var(--critical); font-weight: bold; font-size: 16px; margin-bottom: 10px; text-transform: uppercase; }
-        .anomaly-sector { font-size: 12px; color: var(--warning); margin-bottom: 8px; font-weight: bold; }
-        .anomaly-desc { font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px; }
-        
-        .metric-box {
-            background: rgba(255, 60, 60, 0.1); border: 1px solid rgba(255, 60, 60, 0.3);
-            padding: 12px; border-radius: 2px; font-size: 12px; line-height: 1.4; color: #fca5a5;
+        .header-panel {
+            position: absolute; top: 35px; left: 35px; border-left: 4px solid var(--accent-cyan);
         }
-        .metric-box b { display: block; text-transform: uppercase; font-size: 10px; color: #fff; margin-bottom: 4px; }
 
-        /* Інструкція */
-        .instruction {
-            position: absolute; bottom: 30px; left: 30px; font-size: 12px;
-            color: rgba(255,255,255,0.4); pointer-events: none; letter-spacing: 1px;
+        .header-panel h1 {
+            margin: 0; font-size: 22px; letter-spacing: 4px; font-weight: 800;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--accent-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .system-status {
+            font-size: 11px; color: var(--accent-cyan); margin-top: 5px; letter-spacing: 2px;
+        }
+
+        /* Права бічна панель для виведення детальної інженерної телеметрії */
+        .telemetry-panel {
+            position: absolute; top: 35px; right: 35px; width: 400px;
+            border-top: 4px solid var(--accent-cyan); display: none;
+        }
+
+        .telemetry-title {
+            font-size: 14px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 15px; color: #fff;
+        }
+
+        .telemetry-meta {
+            font-size: 11px; color: var(--accent-gold); margin-bottom: 10px; letter-spacing: 1px;
+        }
+
+        .telemetry-desc {
+            font-size: 13px; color: #9ca3af; line-height: 1.6; margin-bottom: 15px;
+        }
+
+        .diagnostic-box {
+            background: rgba(255, 42, 95, 0.08); border: 1px solid rgba(255, 42, 95, 0.3);
+            padding: 15px; border-radius: 3px; font-size: 12px; line-height: 1.5; color: #fca5a5;
+        }
+        .diagnostic-box b {
+            display: block; text-transform: uppercase; color: #fff; font-size: 10px;
+            letter-spacing: 1px; margin-bottom: 5px;
+        }
+
+        .footer-hint {
+            position: absolute; bottom: 35px; left: 35px; font-size: 11px;
+            color: rgba(255,255,255,0.3); letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
 
-<canvas id="radar-canvas"></canvas>
+<canvas id="canvas-layer"></canvas>
 
-<div class="hud-overlay">
-    <!-- Головний командний блок -->
-    <div class="hud-panel top-left">
-        <h1>GIDEON: QUANTUM RADAR</h1>
-        <div class="status-tag">SCANNING ZVENYHORODKA DISTRICT // 47 ACTIVE NODES</div>
+<div class="hud-container">
+    <!-- Головне вікно системи GIDEON -->
+    <div class="hud-panel header-panel">
+        <h1>GIDEON // CASCADE OVERLOAD STACK</h1>
+        <div class="system-status">SYS_STATUS: CRITICAL_THERMAL_DETECTED // SAMPLE: 47 NODES</div>
     </div>
 
-    <!-- Панель детального аналізу захопленої цілі -->
-    <div class="hud-panel bottom-right" id="detail-panel">
-        <div class="anomaly-title" id="an-name">Завантаження...</div>
-        <div class="anomaly-sector" id="an-sector">Сектор: -</div>
-        <div class="anomaly-desc" id="an-desc">-</div>
-        <div class="metric-box">
-            <b>Критична деструкція:</b>
-            <span id="an-impact">-</span>
+    <!-- Вікно телеметрії конкретної аномалії (блоку стеку) -->
+    <div class="hud-panel telemetry-panel" id="telemetry-box">
+        <div class="telemetry-title" id="tel-title">НАЗВА ЗАГРОЗИ</div>
+        <div class="telemetry-meta" id="tel-sector">ПІДРОЗДІЛ: -</div>
+        <div class="telemetry-desc" id="tel-desc">Опис...</div>
+        <div class="diagnostic-box">
+            <b>МАТРИЦЯ ДЕСТРУКТИВНИХ НАСЛІДКІВ:</b>
+            <span id="tel-impact">-</span>
         </div>
     </div>
 
-    <div class="instruction">
-        [СИСТЕМА]: НАВЕДІТЬ КУРСОР НА АНОМАЛІЮ ДЛЯ ЗАХОПЛЕННЯ ТЕЛЕМЕТРІЇ
+    <div class="footer-hint">
+        [COMMAND LOG]: НАВЕДІТЬ МИШКУ НА БЛОК СТЕКУ ДЛЯ ЗАХОПЛЕННЯ ТЕЛЕМЕТРІЇ РЕАКТОРА
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('radar-canvas');
+    const canvas = document.getElementById('canvas-layer');
     const ctx = canvas.getContext('2d');
-    
-    let centerX, centerY, maxRadius;
-    let scanAngle = 0;
-    let hoveredAnomaly = null;
 
-    // Справжні координати орбіт розраховуються на основі рівня кризи (0 - повний крах, ближче до центру)
-    const anomalies = [
-        { id: 1, name: "Крах графіку (24-30 год)", sector: "СРПП", danger: 0.95, desc: "Фактична зміна триває більше доби. Робота в режимі доба через добу без компенсацій.", impact: "Повна фізична руйнація особового складу, критичний ризик ДТП.", angle: 0.5, size: 8 },
-        { id: 2, name: "Кадровий Вакуум (Некомплект)", sector: "Превенція / СРПП", danger: 0.85, desc: "Некомплект від 30% до 50% у ключових підрозділах. Робота за двох.", impact: "Каскадне звільнення залишку працівників через навантаження.", angle: 1.8, size: 7 },
-        { id: 3, name: "Паливне виснаження", sector: "Логістика", danger: 0.75, desc: "Лише 42% задоволені МТЗ. Несправний автотранспорт, відсутність базових витратних матеріалів.", impact: "Знерухомлення патрулів, ремонт техніки за власний рахунок.", angle: 3.2, size: 6 },
-        { id: 4, name: "Репресивні премії", sector: "Система мотивації", danger: 0.65, desc: "38% відкрита відмова від системи. Премія використовується як батіг 'паличної системи'.", impact: "Повна ліквідація стимулів до якісного документування.", angle: 4.5, size: 6 },
-        { id: 5, name: "Токсичне управління", sector: "Заступник з превенції", danger: 0.55, desc: "Низька довіра до керівництва (2.0 бали). Прямі звіти про цькування та ігнорування проблем.", impact: "Колективні скарги, внутрішній саботаж, репутаційний удар.", angle: 5.8, size: 7 },
-        { id: 6, name: "Сектор Кадрів & ССОБ", sector: "Зона безпеки", danger: 0.15, desc: "Атмосфера стабільна (7-8 балів), нормований день, висока довіра.", impact: "Ризики відсутні. Зона утримання базової стабільності підрозділу.", angle: 2.5, size: 5 }
+    // Налаштування структури даних на основі аналізу анкет особового складу
+    const sectors = [
+        {
+            name: "Сектор РПП (СРПП)",
+            code: "SRPP",
+            load: 1.48, // Перевантаження 148%
+            status: "CRITICAL",
+            blocks: [
+                { title: "Графік добових змін (24-30 год)", desc: "Фактичний час безперервного перебування на службі становить до 30 годин. Зміни доба через добу[cite: 1, 2].", impact: "Повне фізичне та психологічне виснаження, критична втрата концентрації на маршрутах патрулювання." },
+                { title: "Кадровий вакуум штату", desc: "Фактичний некомплект особового складу в секторі досягає 50%[cite: 1, 2]. Навантаження розподіляється за двох-трьох працівників[cite: 1].", impact: "Створення замкненого кола (Decompression Loop) — люди звільняються через тиск, що змушує йти наступних[cite: 1]." },
+                { title: "Токсичний стиль управління", desc: "Низький індекс довіри до першого керівника підрозділу (2.2 з 5)[cite: 1, 2]. Скарги на цькування[cite: 1, 2].", impact: "Руйнація субординації, внутрішній прихований саботаж наказів, колективні скарги[cite: 1]." },
+                { title: "Паливне виснаження", desc: "Жорсткий ліміт або повна відсутність ПММ для патрульних автомобілів[cite: 1, 2]. Ремонт за власні кошти[cite: 1].", impact: "Знерухомлення екіпажів, неможливість оперативного реагування на виклики «102»[cite: 1]." }
+            ]
+        },
+        {
+            name: "Відділ превенції",
+            code: "PREV",
+            load: 1.15, // Перевантаження 115%
+            status: "WARNING",
+            blocks: [
+                { title: "Перевантаження задачами", desc: "Робочий день триває 12-24 години[cite: 1]. Постійна наявність понаднормової роботи без компенсацій[cite: 1].", impact: "Масовий запит на переведення в інші територіальні підрозділи або звільнення[cite: 1]." },
+                { title: "Деструктивне преміювання", desc: "38% опитаних активно критикують премії[cite: 1]. Система використовується як каральний інструмент 'паличної системи'[cite: 1].", impact: "Абсолютна ліквідація стимулів працювати на якісний результат[cite: 1]." },
+                { title: "Мобілізаційний тиск", desc: "Постійне залучення до мобілізаційних заходів разом із ТЦК[cite: 1]. Втрата довіри населення[cite: 1].", impact: "Падіння авторитету поліції та глибока внутрішня демотивація офіцерів зі стажем понад 10 років[cite: 1]." }
+            ]
+        },
+        {
+            name: "Слідчий відділ / Дізнання",
+            code: "INVEST",
+            load: 0.85, 
+            status: "WARNING",
+            blocks: [
+                { title: "Напруженість в колективі", desc: "Атмосфера оцінюється як напружена. Фіксуються внутрішні конфлікти між службами[cite: 1, 2].", impact: "Гальмування досудових розслідувань, несвоєчасне виконання процесуальних доручень[cite: 2]." },
+                { title: "Некомплект слідчих нод", desc: "Брак кваліфікованих кадрів, що призводить до накопичення матеріалів у залишку штату[cite: 1, 2].", impact: "Процесуальні порушення строків, падіння якості документування злочинів[cite: 1]." }
+            ]
+        },
+        {
+            name: "Сектор кримінальної поліції",
+            code: "CRIM",
+            load: 0.60,
+            status: "STABLE",
+            blocks: [
+                { title: "Високе оперативне навантаження", desc: "Робочий час становить в середньому 11-13 годин на добу[cite: 2]. Робота у вихідні дні[cite: 1].", impact: "Поступове накопичення втоми, запити на підвищення заробітної плати[cite: 1]." }
+            ]
+        },
+        {
+            name: "Кадри / Моніторинг / ССОБ",
+            code: "HQ_STABLE",
+            load: 0.20, // Стабільна зона
+            status: "NOMINAL",
+            blocks: [
+                { title: "Зона температурного комфорту", desc: "Ідеальна атмосфера (7-8 балів)[cite: 1, 2]. Нормований день, високий рівень взаємоповаги та підтримки[cite: 1, 2].", impact: "Ризики відсутні. Опора внутрішньої стабільності РВП[cite: 1, 2]." }
+            ]
+        }
     ];
+
+    let hoveredBlock = null;
 
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        centerX = canvas.width / 2;
-        centerY = canvas.height / 2;
-        maxRadius = Math.min(centerX, centerY) * 0.85;
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // Перевірка мишки на об'єктах
+    // Обробка координат мишки для точного захвату блоку всередині стеку
     canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
-        
+
+        const startX = 80;
+        const startY = canvas.height - 120;
+        const stackWidth = (canvas.width - 160 - (sectors.length - 1) * 40) / sectors.length;
+        const blockHeight = 65;
+        const blockGap = 8;
+
         let found = null;
-        anomalies.forEach(a => {
-            // Розрахунок поточної позиції аномалії на сітці радара
-            const currentRadius = maxRadius * (1 - a.danger); // Чим більша небезпека, тим ближче до центру
-            const x = centerX + Math.cos(a.angle) * currentRadius;
-            const y = centerY + Math.sin(a.angle) * currentRadius;
-            
-            const dist = Math.hypot(mx - x, my - y);
-            if (dist < a.size + 10) {
-                found = a;
-            }
+
+        sectors.forEach((sec, sIdx) => {
+            const x = startX + sIdx * (stackWidth + 40);
+            sec.blocks.forEach((blk, bIdx) => {
+                const y = startY - bIdx * (blockHeight + blockGap) - blockHeight;
+
+                if (mx >= x && mx <= x + stackWidth && my >= y && my <= y + blockHeight) {
+                    found = { sector: sec, block: blk };
+                }
+            });
         });
 
         if (found) {
-            hoveredAnomaly = found;
-            document.getElementById('detail-panel').style.display = 'block';
-            document.getElementById('an-name').innerText = found.name;
-            document.getElementById('an-name').style.color = found.danger > 0.5 ? 'var(--critical)' : 'var(--stable)';
-            document.getElementById('an-sector').innerText = `ЛОКАЛІЗАЦІЯ: ${found.sector}`;
-            document.getElementById('an-desc').innerText = found.desc;
-            document.getElementById('an-impact').innerText = found.impact;
+            hoveredBlock = found;
+            const box = document.getElementById('telemetry-box');
+            box.style.display = 'block';
+            document.getElementById('tel-title').innerText = found.block.title;
+            document.getElementById('tel-sector').innerText = `РЕАКТОРНИЙ СЕКТОР: ${found.sector.name} [${found.sector.code}]`;
+            document.getElementById('tel-desc').innerText = found.block.desc;
+            document.getElementById('tel-impact').innerText = found.block.impact;
+
+            // Зміна кольору заголовку поп-апу відповідно до рівня загрози
+            if (found.sector.status === "CRITICAL") box.style.borderTopColor = 'var(--critical-red)';
+            else if (found.sector.status === "WARNING") box.style.borderTopColor = 'var(--accent-gold)';
+            else box.style.borderTopColor = 'var(--stable-green)';
         } else {
-            hoveredAnomaly = null;
+            hoveredBlock = null;
         }
     });
 
-    function drawRadar() {
-        // Очищення з невеликим шлейфом
-        ctx.fillStyle = 'rgba(2, 4, 8, 0.15)';
+    function drawStackEngine() {
+        // Очищення екрана та створення ефекту глибокого кінетичного шлейфу
+        ctx.fillStyle = 'rgba(2, 5, 10, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 1. Малювання кіл зон небезпеки (Сітка радара)
-        const circlesCount = 4;
-        ctx.strokeStyle = 'var(--radar-line)';
+        // Малювання фонової цифрової сітки
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.03)';
         ctx.lineWidth = 1;
-
-        for (let i = 1; i <= circlesCount; i++) {
-            const r = (maxRadius / circlesCount) * i;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Текстові позначки зон
-            ctx.fillStyle = 'rgba(0, 242, 255, 0.3)';
-            ctx.font = '9px monospace';
-            if (i === 1) ctx.fillText("CRITICAL BLACK HOLE (COLLAPSE)", centerX + 10, centerY - r + 15);
-            if (i === 2) ctx.fillText("HIGH DANGER ZONE", centerX + 10, centerY - r + 15);
-            if (i === 3) ctx.fillText("WARNING BUFFER", centerX + 10, centerY - r + 15);
-            if (i === 4) ctx.fillText("STABLE PEAK", centerX + 10, centerY - r + 15);
+        const gridSize = 40;
+        for (let x = 0; x < canvas.width; x += gridSize) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += gridSize) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
 
-        // Перехрестя радара
-        ctx.beginPath();
-        ctx.moveTo(centerX - maxRadius, centerY); ctx.lineTo(centerX + maxRadius, centerY);
-        ctx.moveTo(centerX, centerY - maxRadius); ctx.lineTo(centerX, centerY + maxRadius);
-        ctx.stroke();
+        const startX = 80;
+        const startY = canvas.height - 120;
+        // Динамічний розрахунок ширини стовпців під будь-який монітор
+        const stackWidth = (canvas.width - 160 - (sectors.length - 1) * 40) / sectors.length;
+        const blockHeight = 65;
+        const blockGap = 8;
 
-        // 2. Рух та малювання променя сканера
-        scanAngle += 0.012;
-        if (scanAngle > Math.PI * 2) scanAngle = 0;
+        sectors.forEach((sec, sIdx) => {
+            const x = startX + sIdx * (stackWidth + 40);
+            
+            // Визначення кольорової гами стовпця реактора
+            let secColor = 'var(--accent-cyan)';
+            if (sec.status === "CRITICAL") secColor = 'var(--critical-red)';
+            else if (sec.status === "WARNING") secColor = 'var(--accent-gold)';
+            else if (sec.status === "NOMINAL") secColor = 'var(--stable-green)';
 
-        // Ефект градієнтного конуса сканування
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(scanAngle);
-        const scanGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, maxRadius);
-        scanGrad.addColorStop(0, 'rgba(0, 242, 255, 0.15)');
-        scanGrad.addColorStop(1, 'rgba(0, 242, 255, 0.0)');
-        ctx.fillStyle = scanGrad;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, maxRadius, 0, 0.4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-
-        // 3. Відображення аномалій (Об'єктів)
-        anomalies.forEach(a => {
-            // Динамічне коливання орбіти (ефект космічного об'єкта)
-            a.angle += 0.001; 
-            const currentRadius = maxRadius * (1 - a.danger);
-            const x = centerX + Math.cos(a.angle) * currentRadius;
-            const y = centerY + Math.sin(a.angle) * currentRadius;
-
-            // Визначення кольору за рівнем небезпеки
-            let color = 'var(--accent)';
-            if (a.danger > 0.75) color = 'var(--critical)';
-            else if (a.danger > 0.4) color = 'var(--warning)';
-            else color = 'var(--stable)';
-
-            // Пульсація об'єкта
-            const pulse = Math.sin(Date.now() * 0.005 + a.id) * 3;
-
-            // Світіння навколо аномалії
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = color;
-
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(x, y, a.size + (hoveredAnomaly && hoveredAnomaly.id === a.id ? 4 : 0), 0, Math.PI * 2);
-            ctx.fill();
-
-            // Малювання орбітального вектору (лінія до центру)
-            ctx.shadowBlur = 0;
+            // Малювання інженерної шахти реактора (оболонка стовпця)
+            const totalShaftHeight = (blockHeight + blockGap) * 4 + 15;
             ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            ctx.fillStyle = 'rgba(6, 11, 25, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.fillRect(x - 10, startY - totalShaftHeight, stackWidth + 20, totalShaftHeight);
+            ctx.strokeRect(x - 10, startY - totalShaftHeight, stackWidth + 20, totalShaftHeight);
 
-            // Текст біля об'єкта
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.font = '10px monospace';
-            ctx.fillText(`[ID-${a.id}]:${a.sector}`, x + 12, y + 4);
+            // Текстова інформація знизу під кожним реактором
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(sec.code, x, startY + 25);
+            
+            ctx.font = '9px monospace';
+            ctx.fillStyle = secColor;
+            ctx.fillText(`LOAD: ${(sec.load * 100).toFixed(0)}%`, x, startY + 42);
+            ctx.fillText(`STATUS: ${sec.status}`, x, startY + 54);
+
+            // Рендеринг кінетичних блоків усередині стеку
+            sec.blocks.forEach((blk, bIdx) => {
+                const y = startY - bIdx * (blockHeight + blockGap) - blockHeight;
+                const isHovered = hoveredBlock && hoveredBlock.block.title === blk.title;
+
+                // Ефект глічу (перешкод) для критично перевантажених зон (наприклад СРПП)
+                let glitchOffset = 0;
+                if (sec.status === "CRITICAL" && Math.random() > 0.96) {
+                    glitchOffset = (Math.random() - 0.5) * 7;
+                }
+
+                // Заливка блоку
+                ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.15)' : 'rgba(11, 22, 44, 0.85)';
+                ctx.fillRect(x + glitchOffset, y, stackWidth, blockHeight);
+
+                // Контур блоку зі світінням, якщо система критична
+                ctx.strokeStyle = isHovered ? '#fff' : secColor;
+                ctx.lineWidth = isHovered ? 2 : 1;
+                
+                if (sec.status === "CRITICAL" && !isHovered) {
+                    ctx.shadowBlur = Math.sin(Date.now() * 0.007) * 8 + 10;
+                    ctx.shadowColor = varProp = 'var(--critical-red)';
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.strokeRect(x + glitchOffset, y, stackWidth, blockHeight);
+                ctx.shadowBlur = 0; // Скидання тіні
+
+                // Декоративні кутові тактичні засічки на кожному блоці
+                ctx.fillStyle = secColor;
+                ctx.fillRect(x + glitchOffset, y, 4, 4);
+                ctx.fillRect(x + glitchOffset + stackWidth - 4, y, 4, 4);
+                ctx.fillRect(x + glitchOffset, y + blockHeight - 4, 4, 4);
+                ctx.fillRect(x + glitchOffset + stackWidth - 4, y + blockHeight - 4, 4, 4);
+
+                // Обрізання тексту всередині блоку
+                ctx.fillStyle = isHovered ? '#fff' : '#e5e7eb';
+                ctx.font = 'bold 11px monospace';
+                
+                // Форматування довгого тексту під ширину стовпця
+                const maxTextWidth = stackWidth - 20;
+                let text = blk.title.toUpperCase();
+                if (ctx.measureText(text).width > maxTextWidth) {
+                    while (ctx.measureText(text + '...').width > maxTextWidth) {
+                        text = text.slice(0, -1);
+                    }
+                    text += '...';
+                }
+                ctx.fillText(text, x + 10 + glitchOffset, y + 35);
+            });
         });
 
-        // 4. Епіцентр (Центральна точка тяжіння)
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = 'var(--critical)';
-        ctx.fillStyle = '#000';
-        ctx.strokeStyle = 'var(--critical)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        requestAnimationFrame(drawRadar);
+        requestAnimationFrame(drawStackEngine);
     }
 
-    drawRadar();
+    drawStackEngine();
 </script>
 </body>
 </html>
